@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Expediente de Obra — App (Standalone)</title>
+<style>
+:root{
+  --form-w: 460px; --regs-w: 1fr; --layout-gap: 18px;
+  --brand1:#0d3b66; --brand2:#175fa6; --bg:#F3F6FB; --card:#fff; --borde:#e5e7eb; --text:#0f172a; --muted:#64748b;
+  --red:#dc2626; --purple:#6D28D9; --blue:#2563eb; --amber:#f59e0b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.card{background:var(--card);border:1px solid var(--borde);border-radius:14px;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+header{background:linear-gradient(90deg,var(--brand1),var(--brand2));color:#fff;padding:12px 16px}
+header h1{margin:0;font-size:18px}
+main{width:100%;max-width:none;margin:14px 0;padding:0 18px}
+label{display:block;font-size:12px;color:#334155;margin-bottom:4px}
+input,textarea,select{width:100%;border:1px solid var(--borde);border-radius:12px;padding:10px;background:#fff}
+textarea{min-height:72px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+button{border:0;border-radius:999px;padding:10px 14px;cursor:pointer;background:var(--brand1);color:#fff}
+button.ghost{background:#fff;color:var(--brand1);border:1px solid var(--borde)}
+button.warn{background:var(--red)} .purple{background:var(--purple)} .blue{background:var(--blue)}
+.small-btn{border-radius:10px;padding:6px 10px}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.toolbar input{max-width:360px}
+.table{overflow:auto;border:1px solid var(--borde);border-radius:12px;background:#fff}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--borde);text-align:left;font-size:12px;padding:8px}
+tbody td{border-bottom:1px solid #f1f5f9;padding:8px;font-size:13px;vertical-align:top}
+.oculto{display:none!important}
+.hidden{display:none}
+#login{display:flex;align-items:center;justify-content:center;height:100vh}
+.small-note{color:var(--muted);font-size:12px;margin-top:6px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;border:1px solid transparent;font-weight:600}
+.badge-amber{color:#92400e;background:#FEF3C7;border-color:#FDE68A}
+.badge-red{color:#7f1d1d;background:#FEE2E2;border-color:#FCA5A5}
+.badge-blue{color:#1e3a8a;background:#DBEAFE;border-color:#93C5FD}
+#tabla [data-e], #tabla [data-d], #tabla [data-dev], #tabla [data-aut]{border:0;border-radius:999px;padding:8px 12px;color:#fff}
+#tabla [data-e]{background:var(--purple)} #tabla [data-d]{background:var(--red)}
+#tabla [data-dev]{background:var(--red)} #tabla [data-aut]{background:var(--blue)}
+#tabla table th:first-child, #tabla table td:first-child{display:none}
+.section-sub h3{margin:0;padding:12px 14px;background:#f8fafc;border-bottom:1px solid var(--borde);border-radius:12px 12px 0 0;color:var(--brand1)}
+.section-sub .body{padding:12px 14px}
+dialog{border:0;border-radius:14px;max-width:980px;width:clamp(320px,90vw,980px);padding:0}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+.dialog-h{display:flex;align-items:center;justify-content:space-between;background:var(--brand1);color:#fff;border-radius:14px 14px 0 0;padding:10px 16px}
+.dialog-b{padding:14px;max-height:70vh;overflow:auto}
+.dialog-f{display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--borde);padding:10px 14px}
+.btn-cancel{background:#fff;color:#334155;border:1px solid var(--borde)}
+.btn-primary{background:var(--blue)}
+#layout{display:grid;gap:var(--layout-gap);align-items:start;grid-template-columns:minmax(320px,var(--form-w)) minmax(0,var(--regs-w));grid-template-areas:"form regs"}
+#col-form{grid-area:form} #col-regs{grid-area:regs;display:flex;flex-direction:column;gap:14px}
+@media (max-width:980px){#layout{grid-template-columns:1fr;grid-template-areas:"form" "regs"}}
+.inline{display:flex;gap:8px;align-items:end}
+.inline > *:first-child{flex:1}
+.mini{font-size:12px;color:#334155}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div id="login">
+  <div class="card" style="max-width:360px;width:100%">
+    <header><h1>Entrar</h1></header>
+    <div style="padding:14px">
+      <label>Usuario</label><input id="u" value="admin" autofocus/>
+      <label>Contraseña</label><input id="p" type="password" value="1234"/>
+      <div class="actions"><button id="loginBtn" type="button">Entrar</button></div>
+      <p class="small-note">Demo: admin/1234</p>
+    </div>
+  </div>
+</div>
+
+<section id="app" class="oculto">
+  <header><h1>Expediente de Obra — App (Standalone)</h1></header>
+  <main>
+    <div id="layout">
+      <!-- FORM -->
+      <section id="col-form" class="card" style="padding:14px">
+        <h2 style="margin:6px 0 12px 0;font-size:16px;color:#0d3b66">Formulario</h2>
+        <form id="f">
+          <input type="hidden" id="id"/>
+          <input type="hidden" id="estatus"/>
+          <div class="grid-3">
+            <div><label>Ejercicio</label><input id="ejercicio" type="number"/></div>
+            <div><label>Fecha Recepción</label><input id="fecha_recepcion" type="date"/></div>
+            <div><label>Fecha Elaboración</label><input id="fecha_elaboracion" type="date"/></div>
+          </div>
+          <div class="grid-3">
+            <div>
+              <label>Dependencia</label>
+              <div class="inline">
+                <select id="dependencia"></select>
+                <button id="btnAddDep" type="button" class="ghost small-btn">➕</button>
+              </div>
+            </div>
+            <div><label>Ejecutora</label><input id="ejecutora"/></div>
+          </div>
+          <fieldset>
+            <legend>Datos de la Obra</legend>
+            <div class="grid-4">
+              <div><label>No. Oficio</label><input id="no_oficio"/></div>
+              <div><label>Tipo de Documento</label><input id="tipo_documento"/></div>
+              <div><label>No. Contrato</label><input id="no_contrato"/></div>
+              <div><label>No. Expediente</label><input id="no_expediente"/></div>
+              <div style="grid-column:1 / -1"><label>Nombre de la Obra / Proyecto</label><textarea id="nombre_obra"></textarea></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Financiamiento <span id="totalChip" style="margin-left:8px;font-weight:700;color:#0d3b66">$0.00</span></legend>
+            <div class="grid-3">
+              <div>
+                <label>Fondo</label>
+                <div class="inline">
+                  <select id="fondo"></select>
+                  <button id="btnAddFondo" type="button" class="ghost small-btn">➕</button>
+                </div>
+              </div>
+              <div><label>Importe (base)</label><input id="importe" type="number" step="0.01"/></div>
+            </div>
+            <div id="concWrap" style="margin-top:8px"></div>
+            <div class="actions"><button id="addConc" type="button" class="ghost">➕ Agregar concurrencia</button></div>
+          </fieldset>
+          <fieldset>
+            <legend>Área responsable</legend>
+            <div class="grid-3">
+              <div><label>Departamento</label><input id="departamento"/></div>
+              <div><label>Responsable del Trámite</label><input id="responsable_tramite"/></div>
+            </div>
+          </fieldset>
+          <div class="actions">
+            <button id="save" type="button">💾 Guardar</button>
+            <button id="newRec" type="button" class="ghost">➕ Nuevo</button>
+            <button id="clear" type="reset" class="ghost">🧹 Limpiar</button>
+          </div>
+          <div class="small-note">* Al guardar: Estatus ⇒ <b>EN TRÁMITE</b> (amarillo) salvo que agregues Devolución o Autorización.</div>
+        </form>
+      </section>
+
+      <!-- REGISTROS + PANELES -->
+      <section id="col-regs">
+        <div class="card" style="padding:14px">
+          <h2 style="margin:6px 0 12px 0;font-size:16px;color:#0d3b66">Registros</h2>
+          <div class="toolbar">
+            <input type="search" id="q" placeholder="Buscar por texto…"/>
+            <button id="search" type="button" class="ghost">Buscar</button>
+            <button id="refresh" type="button" class="ghost">Actualizar</button>
+          </div>
+          <div class="table" id="tabla"></div>
+        </div>
+        <div class="card section-sub">
+          <h3>Oficio(s) de Autorización del registro</h3>
+          <div class="body" id="listAut">Selecciona un registro para ver sus autorizaciones.</div>
+        </div>
+        <div class="card section-sub">
+          <h3>Devoluciones del registro</h3>
+          <div class="body" id="listDev">Selecciona un registro para ver sus devoluciones.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+</section>
+
+<!-- Devolución -->
+<dialog id="dlgDev">
+  <div class="dialog-h">
+    <strong>Devolución del Registro</strong>
+    <button type="button" class="btn-cancel" onclick="document.getElementById('dlgDev').close()">Cerrar</button>
+  </div>
+  <div class="dialog-b">
+    <form id="formDev">
+      <input type="hidden" data-f="id_dp"/>
+      <div class="grid-3">
+        <div><label>Fecha de Elaboración</label><input type="date" data-f="fecha_elab"/></div>
+        <div><label>No. de Oficio</label><input data-f="no_oficio"/></div>
+        <div><label>No. de Expediente</label><input data-f="no_expediente"/></div>
+      </div>
+      <div class="grid-3">
+        <div><label>Tipo de Documento</label><input data-f="tipo_documento"/></div>
+        <div><label>Importe</label><input type="number" step="0.01" data-f="importe"/></div>
+        <div><label>Estatus</label><input value="DEVOLUCIÓN" readonly/></div>
+      </div>
+      <div><label>Descripción</label><textarea data-f="descripcion"></textarea></div>
+      <div><label>Motivo</label><textarea data-f="motivo"></textarea></div>
+    </form>
+  </div>
+  <div class="dialog-f">
+    <button type="button" class="btn-cancel" onclick="document.getElementById('dlgDev').close()">Cancelar</button>
+    <button type="button" id="btnDevSave" class="warn">Guardar Devolución</button>
+  </div>
+</dialog>
+
+<!-- Autorización -->
+<dialog id="dlgAut">
+  <div class="dialog-h">
+    <strong>Oficio de Autorización</strong>
+    <button type="button" class="btn-cancel" onclick="document.getElementById('dlgAut').close()">Cerrar</button>
+  </div>
+  <div class="dialog-b">
+    <form id="formAut">
+      <input type="hidden" data-f="id_unico"/>
+      <div class="grid-4">
+        <div><label>ID Proyecto</label><input data-f="id_proyecto" id="aut_id_proyecto"/></div>
+        <div><label>Ejercicio</label><input data-f="ejercicio" id="aut_ejercicio" readonly/></div>
+        <div><label>Dirección</label><input data-f="direccion" id="aut_direccion" readonly/></div>
+        <div>
+          <label>Fondo</label>
+          <div class="inline">
+            <select data-f="fondo" id="aut_fondo"></select>
+            <button id="btnAddFondoAut" type="button" class="ghost small-btn">➕</button>
+          </div>
+        </div>
+
+        <!-- Folio SIFAIS (se muestra solo cuando Fondo contiene FAISMUN) -->
+        <div id="grp_sifais">
+          <label>Folio SIFAIS</label>
+          <input data-f="folio_sifais" id="aut_folio_sifais"/>
+        </div>
+
+        <div>
+          <label>¿Oficio Estatal?</label>
+          <select data-f="es_estatal" id="aut_es_estatal"><option>No</option><option>Sí</option></select>
+        </div>
+        <div id="grp_aut_estatal">
+          <label>Oficio Aut. Estatal</label><input data-f="oficio_aut_estatal" id="aut_oficio_estatal"/>
+        </div>
+        <div id="grp_fecha_aut">
+          <label>Fecha Autorización</label><input type="date" data-f="fecha_aut" id="aut_fecha_aut"/>
+        </div>
+
+        <div style="grid-column:1 / 1"><label>Oficio de Autorización</label><input data-f="oficio_aut"/></div>
+        <div style="grid-column:1 / -1"><label>Nombre de la Obra</label><input data-f="nombre_obra"/></div>
+        <div><label>Autorizado</label><input data-f="autorizado"/></div>
+        <div><label>Autorizado MOD</label><input data-f="autorizado_mod"/></div>
+        <div><label>Inversión Modificada</label><input data-f="inversion_modificada"/></div>
+        <div><label>Saldo</label><input data-f="saldo"/></div>
+        <div><label>CTA Contable</label><input data-f="cta_contable"/></div>
+        <div><label>COG</label><input data-f="cog"/></div>
+        <div><label>% Avance Financiero</label><input data-f="avance_financiero"/></div>
+        <div><label>Concurrencia 1/2</label><input data-f="concurrencia"/></div>
+        <div><label>Fondo Concertado 1</label><input data-f="fondo_conc_1"/></div>
+        <div><label>Importe Concertado 1</label><input data-f="imp_conc_1"/></div>
+        <div><label>IMP Concertado1 MOD</label><input data-f="imp_conc1_mod"/></div>
+        <div><label>CTA Contable 1</label><input data-f="cta_cont_1"/></div>
+        <div><label>COG 1</label><input data-f="cog_1"/></div>
+        <div><label>Fondo Concertado 2</label><input data-f="fondo_conc_2"/></div>
+        <div><label>Importe Concertado 2</label><input data-f="imp_conc_2"/></div>
+        <div><label>IMP Concertado2 MOD</label><input data-f="imp_conc2_mod"/></div>
+        <div><label>CTA Contable 2</label><input data-f="cta_cont_2"/></div>
+        <div><label>COG 2</label><input data-f="cog_2"/></div>
+        <div><label>PBR</label><input data-f="pbr"/></div>
+        <div><label>Línea de Acción</label><input data-f="linea_accion"/></div>
+        <div><label>U.M</label><input data-f="um"/></div>
+        <div><label>Metas</label><input data-f="metas"/></div>
+        <div><label>Tipo de Beneficiario</label><input data-f="tipo_benef"/></div>
+        <div><label>No. de Beneficiario</label><input data-f="no_benef"/></div>
+        <div><label>Fecha de Creación</label><input type="date" data-f="fecha_creacion"/></div>
+        <div><label>Fecha de Inicio</label><input type="date" data-f="fecha_inicio"/></div>
+        <div><label>Fecha Final</label><input type="date" data-f="fecha_final"/></div>
+        <div><label>Sistema</label><input data-f="sistema"/></div>
+        <div><label>Estado</label><input data-f="estado"/></div>
+      </div>
+    </form>
+  </div>
+  <div class="dialog-f">
+    <button type="button" class="btn-cancel" onclick="document.getElementById('dlgAut').close()">Cancelar</button>
+    <button type="button" id="btnAutSave" class="btn-primary">Guardar Autorización</button>
+  </div>
+</dialog>
+
+<script>
+(()=>{
+  const $=s=>document.querySelector(s);
+  const toast=(m)=>{const d=document.createElement('div');d.className='card';d.style.cssText='position:fixed;right:16px;bottom:16px;padding:10px 12px;z-index:99';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),1600)}
+
+  /* ---------------- Login ---------------- */
+  const showApp=()=>{const lg=$('#login'),app=$('#app');lg.classList.add('oculto');lg.style.display='none';app.classList.remove('oculto');app.style.display='block';autoYear();seedCatalogs();render();};
+  const login=()=>{const u=$('#u').value.trim(),p=$('#p').value.trim(); if(u==='admin'&&p==='1234'){showApp()} else toast('Credenciales inválidas')};
+  $('#loginBtn').onclick=login; ['#u','#p'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter')login()}));
+
+  /* ----------- Catálogos (editable) ----------- */
+  const DEPS_KEY='deps_list_v1';
+  const FONDOS_KEY='fondos_list_v1';
+  const DEPS_SEED=[
+    "Despacho del Presidente Municipal","Coordinación de Comunicación Social","Coordinación de Relaciones Públicas","Coordinación de Transparencia, Gobierno Abierto y Archivos","Dirección de Desarrollo Económico y Competitividad","Dirección de Desarrollo Humano y Educación","Dirección de Desarrollo Rural","Dirección de Desarrollo Urbano y Ecología","Dirección de Mantenimiento Urbano","Dirección de Obras Públicas","Dirección de Planeación e Innovación Gubernamental","Dirección de Seguridad Pública Municipal","Dirección de Servicios Públicos Municipales","Oficialía Mayor","Órgano Interno de Control","Regidores","Secretaría del H. Ayuntamiento","Sindicatura","Tesorería Municipal","Consejo de Urbanización Municipal","DIF Municipal","Instituto de Cultura del Municipio de Chihuahua","Instituto de Planeación Integral del Municipio de Chihuahua","Instituto Municipal de Cultura Física y Deporte","Instituto Municipal de las Mujeres","Instituto Municipal de Pensiones","Instituto Municipal de Prevención y Atención a la Salud"
+  ];
+  const FONDOS_SEED=["FAISMUN/25","FAFM/25","FODESM/25","DIRECTO/25","PCAM/25","FAM/25","VUPE/25"];
+
+  function seedCatalogs(){
+    if(!localStorage.getItem(DEPS_KEY)) localStorage.setItem(DEPS_KEY, JSON.stringify(DEPS_SEED));
+    if(!localStorage.getItem(FONDOS_KEY)) localStorage.setItem(FONDOS_KEY, JSON.stringify(FONDOS_SEED));
+    fillSelect($('#dependencia'), JSON.parse(localStorage.getItem(DEPS_KEY)));
+    fillSelect($('#fondo'), JSON.parse(localStorage.getItem(FONDOS_KEY)));
+  }
+  function fillSelect(sel, list){
+    sel.innerHTML = `<option value="" disabled selected>Selecciona…</option>` + list.map(v=>`<option>${v}</option>`).join('');
+  }
+  function addToCatalog(key, targetSelect){
+    const list = JSON.parse(localStorage.getItem(key)||'[]');
+    const val = prompt('Nuevo valor:')?.trim();
+    if(!val) return;
+    if(!list.includes(val)){ list.push(val); localStorage.setItem(key, JSON.stringify(list)); fillSelect(targetSelect, list); targetSelect.value=val; toast('Agregado'); }
+    else { targetSelect.value=val; toast('Ya existía'); }
+  }
+  $('#btnAddDep').onclick = ()=> addToCatalog(DEPS_KEY, $('#dependencia'));
+  $('#btnAddFondo').onclick = ()=> addToCatalog(FONDOS_KEY, $('#fondo'));
+
+  /* ---------------- Helpers ---------------- */
+  const uid=()=> 'OB-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+  const buildT=o=>Object.values(o).map(v=>String(v??'').toLowerCase()).join('|');
+  function autoYear(){ const el=$('#ejercicio'); if(el && !el.value){ el.value=new Date().getFullYear(); } }
+  function fmtMoney(v){ const n=Number(v||0); return n? n.toLocaleString('es-MX',{style:'currency',currency:'MXN'}):'' }
+  function badge(s){ const v=(s||'').toUpperCase(); if(v==='DEVOLUCIÓN') return '<span class="badge badge-red">DEVOLUCIÓN</span>'; if(v==='AUTORIZADO') return '<span class="badge badge-blue">AUTORIZADO</span>'; return '<span class="badge badge-amber">EN TRÁMITE</span>'; }
+  const computeStatus=(o)=> (o.autorizaciones?.length>0) ? 'AUTORIZADO' : (o.devoluciones?.length>0) ? 'DEVOLUCIÓN' : 'EN TRÁMITE';
+
+  /* -------- Concurrencias -------- */
+  function addConc(v={fondo:'',importe:''}){
+    const row=document.createElement('div'); row.className='grid-4 conc-item';
+    row.innerHTML=`<div><label>Fondo</label><input data-n="fondo" value="${v.fondo??''}"></div>
+                   <div><label>Importe a concurrir</label><input data-n="importe" type="number" step="0.01" value="${v.importe??''}"></div>
+                   <div style="grid-column:3/5;display:flex;align-items:end"><button class="ghost" data-rm type="button">🗑️ Quitar</button></div>`;
+    $('#concWrap').appendChild(row);
+    row.oninput=recalc; row.querySelector('[data-rm]').onclick=()=>{row.remove();recalc();};
+  }
+  function readConc(){ return Array.from(document.querySelectorAll('#concWrap .conc-item')).map(el=>({fondo:el.querySelector('[data-n="fondo"]').value.trim(),importe:Number(el.querySelector('[data-n="importe"]').value||0)})); }
+  function recalc(){ const base=Number($('#importe').value||0); const extra=readConc().reduce((a,c)=>a+Number(c.importe||0),0); const t=base+extra; $('#totalChip').textContent=t.toLocaleString('es-MX',{style:'currency',currency:'MXN'}); }
+  $('#addConc').onclick=()=>addConc(); $('#importe').oninput=recalc;
+
+  /* ---------------- IndexedDB ---------------- */
+  const DB='app_exp_obra', VER=4; let db=null;
+  function openDB(){ if(db) return Promise.resolve(db); return new Promise((res,rej)=>{ const r=indexedDB.open(DB,VER); r.onupgradeneeded=()=>{ const d=r.result; if(!d.objectStoreNames.contains('items')){ const st=d.createObjectStore('items',{keyPath:'id'}); st.createIndex('by_text','_t'); } }; r.onsuccess=()=>{db=r.result;res(db)}; r.onerror=()=>rej(r.error); }); }
+  async function put(o){ await openDB(); o._t=buildT(o); if(!o.id) o.id=uid(); return new Promise((res,rej)=>{ const r=db.transaction('items','readwrite').objectStore('items').put(o); r.onsuccess=()=>res(o); r.onerror=()=>rej(r.error); }); }
+  async function all(){ await openDB(); return new Promise((res,rej)=>{ const r=db.transaction('items').objectStore('items').getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error); }); }
+  async function get(id){ await openDB(); return new Promise((res,rej)=>{ const r=db.transaction('items').objectStore('items').get(id); r.onsuccess=()=>res(r.result||null); r.onerror=()=>rej(r.error); }); }
+  async function del(id){ await openDB(); return new Promise((res,rej)=>{ const r=db.transaction('items','readwrite').objectStore('items').delete(id); r.onsuccess=()=>res(true); r.onerror=()=>rej(r.error); }); }
+
+  /* ---------------- Form Base ---------------- */
+  let selectedId = null;
+  function collect(){ 
+    return { 
+      id:$('#id').value.trim(),
+      ejercicio:$('#ejercicio').value, fecha_recepcion:$('#fecha_recepcion').value, fecha_elaboracion:$('#fecha_elaboracion').value,
+      dependencia:$('#dependencia').value, ejecutora:$('#ejecutora').value.trim(),
+      no_oficio:$('#no_oficio').value.trim(), tipo_documento:$('#tipo_documento').value.trim(),
+      no_contrato:$('#no_contrato').value.trim(), no_expediente:$('#no_expediente').value.trim(),
+      nombre_obra:$('#nombre_obra').value.trim(),
+      fondo:$('#fondo').value, importe:$('#importe').value,
+      departamento:$('#departamento').value.trim(), responsable_tramite:$('#responsable_tramite').value.trim(),
+      concurrencias:readConc(),
+      estatus:($('#estatus').value||'').trim() || 'EN TRÁMITE',
+      devoluciones:[], autorizaciones:[]
+    }; 
+  }
+  function fill(o){ 
+    const map={id:'id',ejercicio:'ejercicio',fecha_recepcion:'fecha_recepcion',fecha_elaboracion:'fecha_elaboracion',
+      dependencia:'dependencia',ejecutora:'ejecutora',no_oficio:'no_oficio',tipo_documento:'tipo_documento',no_contrato:'no_contrato',
+      no_expediente:'no_expediente',nombre_obra:'nombre_obra',fondo:'fondo',importe:'importe',departamento:'departamento',
+      responsable_tramite:'responsable_tramite',estatus:'estatus'}; 
+    Object.entries(map).forEach(([k,id])=>{ const el=document.getElementById(id); if(el) el.value=o[k]??''; }); 
+    $('#concWrap').innerHTML=''; (o.concurrencias||[]).forEach(addConc); recalc(); 
+    selectedId = o.id || null; renderDetails();
+  }
+
+  /* ---------------- Render principal ---------------- */
+  async function render(q=''){ 
+    const host=$('#tabla'); const items=await all(); const term=String(q||'').toLowerCase(); 
+    const rows= term? items.filter(x=>String(x._t||'').includes(term)):items; 
+    host.innerHTML=`<table><thead>
+      <tr><th>ID</th><th>Ejercicio</th><th>Fecha</th><th>No.Oficio</th><th>Dependencia</th><th>Nombre</th><th>Importe</th><th>Estatus</th><th>Acciones</th></tr>
+    </thead><tbody>${
+      rows.map(r=>`<tr>
+        <td>${r.id}</td><td>${r.ejercicio||''}</td><td>${r.fecha_recepcion||''}</td><td>${r.no_oficio||''}</td><td>${r.dependencia||''}</td>
+        <td>${r.nombre_obra||''}</td><td>${fmtMoney(r.importe)}</td><td>${badge(r.estatus||'EN TRÁMITE')}</td>
+        <td><button data-e='${r.id}'>Editar</button> <button data-d='${r.id}'>Eliminar</button> <button data-dev='${r.id}'>Devolución</button> <button data-aut='${r.id}'>Oficio de Autorización</button></td>
+      </tr>`).join('')
+    }</tbody></table>`; 
+  }
+
+  /* ---------------- Paneles ---------------- */
+  async function renderDetails(){
+    const autHost = $('#listAut'); const devHost = $('#listDev');
+    if(!selectedId){ autHost.textContent='Selecciona un registro para ver sus autorizaciones.'; devHost.textContent='Selecciona un registro para ver sus devoluciones.'; return; }
+    const o = await get(selectedId); if(!o){ autHost.textContent='Registro no encontrado.'; devHost.textContent=''; return; }
+
+    const autos = o.autorizaciones||[];
+    autHost.innerHTML = autos.length
+      ? `<div class="table"><table><thead><tr><th>ID Único</th><th>ID Proyecto</th><th>Fondo</th><th>Folio SIFAIS</th><th>Oficio</th><th>Fecha Aut.</th><th>Importe Conc. 1</th><th>Acciones</th></tr></thead><tbody>
+          ${autos.map((a,i)=>`<tr>
+              <td>${a.id_unico||''}</td><td>${a.id_proyecto||''}</td><td>${a.fondo||''}</td><td>${a.folio_sifais||''}</td>
+              <td>${a.oficio_aut||''}</td><td>${a.fecha_aut||''}</td><td>${fmtMoney(a.imp_conc_1)}</td>
+              <td><button class='small-btn ghost' data-aut-view='${i}'>Ver</button> <button class='small-btn purple' data-aut-edit='${i}'>Editar</button> <button class='small-btn warn' data-aut-del='${i}'>Eliminar</button></td>
+            </tr>`).join('')}
+         </tbody></table></div>`
+      : 'No hay autorizaciones registradas para este expediente.';
+
+    const devs = o.devoluciones||[];
+    devHost.innerHTML = devs.length
+      ? `<div class="table"><table><thead><tr><th>ID DP</th><th>Fecha</th><th>No. Oficio</th><th>Tipo Doc.</th><th>Importe</th><th>Motivo</th><th>Acciones</th></tr></thead><tbody>
+          ${devs.map((d,i)=>`<tr>
+            <td>${d.id_dp||''}</td><td>${d.fecha_elab||''}</td><td>${d.no_oficio||''}</td><td>${d.tipo_documento||''}</td><td>${fmtMoney(d.importe)}</td><td>${(d.motivo||'').slice(0,80)}</td>
+            <td><button class='small-btn ghost' data-dev-view='${i}'>Ver</button> <button class='small-btn purple' data-dev-edit='${i}'>Editar</button> <button class='small-btn warn' data-dev-del='${i}'>Eliminar</button></td>
+          </tr>`).join('')}
+         </tbody></table></div>`
+      : 'No hay devoluciones registradas para este expediente.';
+  }
+
+  /* ---------------- Acciones Form ---------------- */
+  $('#save').onclick=async()=>{ 
+    const o=collect(); 
+    const prev = o.id ? await get(o.id) : null;
+    if(prev){ o.estatus=prev.estatus||o.estatus||'EN TRÁMITE'; o.devoluciones=prev.devoluciones||[]; o.autorizaciones=prev.autorizaciones||[]; }
+    else { o.estatus='EN TRÁMITE'; o.devoluciones=[]; o.autorizaciones=[]; }
+    const saved=await put(o); $('#id').value=saved.id; selectedId=saved.id;
+    render($('#q')?.value); renderDetails(); toast('Expediente guardado');
+  };
+  $('#newRec').onclick=()=>{ $('#f').reset(); $('#id').value=''; selectedId=null; $('#concWrap').innerHTML=''; recalc(); };
+  $('#search').onclick=()=> render($('#q').value); $('#q').oninput=()=> render($('#q').value); $('#refresh').onclick=()=> render($('#q').value);
+
+  /* ---------------- Tabla / Subtablas Clicks ---------------- */
+  document.addEventListener('click', async (e)=>{
+    const ed=e.target.closest('[data-e]'); 
+    const rm=e.target.closest('[data-d]'); 
+    const dv=e.target.closest('[data-dev]');
+    const au=e.target.closest('[data-aut]');
+    const dvView=e.target.closest('[data-dev-view]'); const dvEdit=e.target.closest('[data-dev-edit]'); const dvDel=e.target.closest('[data-dev-del]');
+    const auView=e.target.closest('[data-aut-view]'); const auEdit=e.target.closest('[data-aut-edit]'); const auDel=e.target.closest('[data-aut-del]');
+
+    if(ed){ const id=ed.getAttribute('data-e'); const o=await get(id); if(o){ fill(o); } }
+    if(rm){ const id=rm.getAttribute('data-d'); if(confirm('¿Eliminar registro?')){ await del(id); selectedId=null; render($('#q').value); renderDetails(); } }
+
+    if(dv){ const id=dv.getAttribute('data-dev'); const o=await get(id); if(!o) return; selectedId = id; renderDetails();
+      const dlg=$('#dlgDev'); $('#formDev').reset(); $('#formDev [data-f="id_dp"]').value = 'DP-'+Math.random().toString(36).slice(2,8).toUpperCase();
+      document.querySelectorAll('#formDev input, #formDev textarea, #formDev select').forEach(el=>el.disabled=false); $('#btnDevSave').style.display=''; delete dlg.dataset.editIndex; delete dlg.dataset.mode; dlg.showModal();
+    }
+
+    if(au){ const id=au.getAttribute('data-aut'); const o=await get(id); if(!o) return; selectedId = id; renderDetails();
+      const fondos = JSON.parse(localStorage.getItem(FONDOS_KEY)||'[]'); fillSelect($('#aut_fondo'), fondos);
+      $('#formAut').reset();
+      // prellenar
+      $('#aut_ejercicio').value = o.ejercicio || '';
+      $('#aut_direccion').value = o.dependencia || '';
+      $('#aut_fondo').value = o.fondo || '';
+      // aplicar reglas UI
+      applySifaisLogic(); applyOficioEstatalLogic();
+      $('#formAut [data-f="id_unico"]').value = 'OA-'+Math.random().toString(36).slice(2,8).toUpperCase();
+      document.querySelectorAll('#formAut input, #formAut textarea, #formAut select').forEach(el=>el.disabled=false); $('#btnAutSave').style.display='';
+      const dlg=$('#dlgAut'); delete dlg.dataset.editIndex; delete dlg.dataset.mode; dlg.showModal();
+    }
+
+    // Subacciones DEV
+    if(dvView||dvEdit||dvDel){ const o=await get(selectedId); if(!o) return; }
+    if(dvView){ const idx=Number(dvView.getAttribute('data-dev-view')); const it=(await get(selectedId))?.devoluciones?.[idx]; if(!it) return; const dlg=$('#dlgDev'); dlg.dataset.mode='view';
+      document.querySelectorAll('#formDev [data-f]').forEach(el=>{ el.value = it[el.getAttribute('data-f')]||''; }); document.querySelectorAll('#formDev input, #formDev textarea').forEach(el=>el.disabled=true); $('#btnDevSave').style.display='none'; dlg.showModal();}
+    if(dvEdit){ const idx=Number(dvEdit.getAttribute('data-dev-edit')); const it=(await get(selectedId))?.devoluciones?.[idx]; if(!it) return; const dlg=$('#dlgDev'); dlg.dataset.mode='edit'; dlg.dataset.editIndex=String(idx);
+      document.querySelectorAll('#formDev [data-f]').forEach(el=>{ el.value = it[el.getAttribute('data-f')]||''; }); document.querySelectorAll('#formDev input, #formDev textarea').forEach(el=>el.disabled=false); $('#btnDevSave').style.display=''; dlg.showModal();}
+    if(dvDel){ const idx=Number(dvDel.getAttribute('data-dev-del')); const o=await get(selectedId); (o.devoluciones||[]).splice(idx,1); o.estatus = computeStatus(o); await put(o); render($('#q').value); renderDetails(); toast('Devolución eliminada'); }
+
+    // Subacciones AUT
+    if(auView||auEdit||auDel){ const o=await get(selectedId); if(!o) return; const fondos = JSON.parse(localStorage.getItem(FONDOS_KEY)||'[]'); fillSelect($('#aut_fondo'), fondos); }
+    if(auView){ const idx=Number(auView.getAttribute('data-aut-view')); const it=(await get(selectedId))?.autorizaciones?.[idx]; if(!it) return; const dlg=$('#dlgAut'); dlg.dataset.mode='view';
+      document.querySelectorAll('#formAut [data-f]').forEach(el=>{ el.value = it[el.getAttribute('data-f')]||''; }); document.querySelectorAll('#formAut input, #formAut textarea, #formAut select').forEach(el=>el.disabled=true); $('#btnAutSave').style.display='none';
+      applySifaisLogic(); applyOficioEstatalLogic(); dlg.showModal();}
+    if(auEdit){ const idx=Number(auEdit.getAttribute('data-aut-edit')); const it=(await get(selectedId))?.autorizaciones?.[idx]; if(!it) return; const dlg=$('#dlgAut'); dlg.dataset.mode='edit'; dlg.dataset.editIndex=String(idx);
+      document.querySelectorAll('#formAut [data-f]').forEach(el=>{ el.value = it[el.getAttribute('data-f')]||''; }); document.querySelectorAll('#formAut input, #formAut textarea, #formAut select').forEach(el=>el.disabled=false); $('#btnAutSave').style.display='';
+      applySifaisLogic(); applyOficioEstatalLogic(); dlg.showModal();}
+    if(auDel){ const idx=Number(auDel.getAttribute('data-aut-del')); const o=await get(selectedId); (o.autorizaciones||[]).splice(idx,1); o.estatus = computeStatus(o); await put(o); render($('#q').value); renderDetails(); toast('Autorización eliminada'); }
+  });
+
+  /* -------- Of. Autorización: lógica UI -------- */
+  function applySifaisLogic(){
+    const fondo = ($('#aut_fondo').value || '').toUpperCase();
+    const grp = $('#grp_sifais');
+    const inp = $('#aut_folio_sifais');
+    if (fondo.includes('FAISMUN')) {
+      grp.classList.remove('hidden'); inp.disabled=false; if (inp.value==='N/A') inp.value='';
+    } else {
+      grp.classList.add('hidden'); inp.value='N/A'; inp.disabled=true;
+    }
+  }
+  function applyOficioEstatalLogic(){
+    const es = $('#aut_es_estatal').value;
+    const grp1=$('#grp_aut_estatal'), grp2=$('#grp_fecha_aut');
+    if(es==='Sí'){ grp1.classList.remove('hidden'); grp2.classList.remove('hidden'); }
+    else { grp1.classList.add('hidden'); grp2.classList.add('hidden'); $('#aut_oficio_estatal').value='N/A'; $('#aut_fecha_aut').value=''; }
+  }
+  $('#aut_fondo')?.addEventListener('change', applySifaisLogic);
+  $('#aut_es_estatal')?.addEventListener('change', applyOficioEstatalLogic);
+  $('#btnAddFondoAut').onclick = ()=> addToCatalog(FONDOS_KEY, $('#aut_fondo'));
+
+  /* -------- Guardar Devolución / Autorización -------- */
+  $('#btnDevSave').onclick = async ()=>{
+    const id=selectedId; const base = await get(id); if(!base) return;
+    const dev = {}; document.querySelectorAll('#formDev [data-f]').forEach(el=> dev[el.getAttribute('data-f')]=el.value);
+    const dlg=$('#dlgDev'); const idx = dlg.dataset.editIndex;
+    base.devoluciones = base.devoluciones || [];
+    if(idx!==undefined){ base.devoluciones[Number(idx)] = dev; } else { base.devoluciones.push(dev); }
+    base.estatus = computeStatus(base);
+    await put(base); dlg.close(); render($('#q').value); renderDetails(); toast('Devolución registrada');
+  };
+
+  // Valida ID Proyecto único (global)
+  async function isIdProyectoTaken(idProyecto, ignore={expId:null, autIndex:null}){
+    const items = await all();
+    const target = (idProyecto||'').trim().toLowerCase();
+    for(const exp of items){
+      const arr = exp.autorizaciones||[];
+      for(let i=0;i<arr.length;i++){
+        if(ignore && exp.id===ignore.expId && i===ignore.autIndex) continue;
+        if(String(arr[i].id_proyecto||'').trim().toLowerCase()===target) return true;
+      }
+    }
+    return false;
+  }
+
+  $('#btnAutSave').onclick = async ()=>{
+    const id=selectedId; const base = await get(id); if(!base) return;
+    const aut = {}; document.querySelectorAll('#formAut [data-f]').forEach(el=> aut[el.getAttribute('data-f')] = el.value);
+
+    // Completar dependientes del formulario
+    aut.ejercicio = base.ejercicio;
+    aut.direccion = base.dependencia;
+
+    // Oficio Estatal => N/A si No
+    if($('#aut_es_estatal').value==='No'){ aut.oficio_aut_estatal = 'N/A'; if(!aut.fecha_aut) aut.fecha_aut=''; }
+
+    // Folio SIFAIS => N/A si Fondo no contiene FAISMUN
+    if (!(($('#aut_fondo').value||'').toUpperCase().includes('FAISMUN'))) {
+      aut.folio_sifais = 'N/A';
+    }
+
+    // Validar ID Proyecto único
+    const dlg=$('#dlgAut'); const isEditing = dlg.dataset.editIndex!==undefined;
+    const ignore = isEditing ? {expId: base.id, autIndex: Number(dlg.dataset.editIndex)} : null;
+    if(await isIdProyectoTaken(aut.id_proyecto, ignore)){ toast('El ID Proyecto ya está en uso.'); return; }
+
+    base.autorizaciones = base.autorizaciones || [];
+    if(isEditing){ base.autorizaciones[Number(dlg.dataset.editIndex)] = aut; }
+    else { base.autorizaciones.push(aut); }
+
+    base.estatus = computeStatus(base);
+    await put(base); dlg.close(); render($('#q').value); renderDetails(); toast('Autorización registrada');
+  };
+})();
+</script>
+</body>
+</html>
