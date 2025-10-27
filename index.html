@@ -1,0 +1,12 @@
+<!-- En el archivo FORMULARIO EXP.html, modifica la función guardarExpediente() -->
+<script>
+    function guardarExpediente() {
+        // ... código existente ...
+
+        // Guardar en localStorage
+        localStorage.setItem('expedientes', JSON.stringify(expedientes));
+        
+        // Cerrar el formulario
+        window.close();
+    }
+</script>
